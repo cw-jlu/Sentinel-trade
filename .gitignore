@@ -1,0 +1,60 @@
+# ===================================
+# 1. 前端 (Vue/React/Node)
+# ===================================
+node_modules/
+npm-debug.log*
+yarn-error.log*
+dist/
+build/
+.output/
+.temp/
+
+# ===================================
+# 2. Python (大数据常用)
+# ===================================
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+*.log
+
+# ===================================
+# 3. Java (Maven/Gradle 通用)
+# ===================================
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!.idea
+*.iml
+*.iws
+*.ipr
+out/
+
+# ===================================
+# 4. 编辑器 & 系统垃圾
+# ===================================
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+*~
+
+# ===================================
+# 5. 环境变量 / 机密文件
+# ===================================
+.env
+.env.*
+.credentials/
+config.local.yml

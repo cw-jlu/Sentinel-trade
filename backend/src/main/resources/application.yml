@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: sentinel-trade-backend
+
+  # Redis (hot data)
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+      timeout: 2000ms
+
+  # MySQL (cold data)
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3306/sentinel_trade?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:sentinel123}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+  # WebSocket
+  websocket:
+    message-size-limit: 65536
+
+# ClickHouse
+clickhouse:
+  url: ${CLICKHOUSE_URL:http://localhost:8123}
+  database: ${CLICKHOUSE_DATABASE:sentinel_trade}
+  jdbc-url: jdbc:clickhouse://${CLICKHOUSE_HOST:localhost}:${CLICKHOUSE_HTTP_PORT:8123}/${CLICKHOUSE_DATABASE:sentinel_trade}?compress=0
+
+server:
+  port: 8080
+
+logging:
+  level:
+    com.sentinel_trade: INFO
+    org.springframework.web.socket: INFO

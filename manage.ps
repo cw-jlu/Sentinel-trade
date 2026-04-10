@@ -1,0 +1,78 @@
+# Sentinel-Trade Management Script (PowerShell)
+# Usage: ./manage.ps1 [start|stop|restart|status|logs|clean]
+
+param (
+    [Parameter(Mandatory=$false, Position=0)]
+    [ValidateSet("start", "stop", "restart", "status", "logs", "clean", "ui")]
+    $Action = "status",
+
+    [Parameter(Mandatory=$false, Position=1)]
+    $Service = ""
+)
+
+$DOCKER_COMPOSE = "docker-compose"
+
+function Show-Help {
+    Write-Host "Sentinel-Trade 管理脚本" -ForegroundColor Cyan
+    Write-Host "用法: ./manage.ps1 [Action] [Service]"
+    Write-Host "`n可用操作:"
+    Write-Host "  start   - 启动所有服务 (构建并后台运行)"
+    Write-Host "  stop    - 停止并移除容器"
+    Write-Host "  restart - 重启服务"
+    Write-Host "  status  - 查看服务运行状态"
+    Write-Host "  logs    - 查看日志 (可选指定服务名，如: ./manage.ps1 logs ingestion)"
+    Write-Host "  clean   - 彻底清理 (移除容器、网络及磁盘数据卷)"
+    Write-Host "  ui      - 打开 Flink 控制台 (8081) 和前端看板 (3000)"
+}
+
+# 检查 Docker 环境
+if (!(Get-Command docker -ErrorAction SilentlyContinue)) {
+    Write-Error "错误: 未找到 Docker，请先安装 Docker Desktop。"
+    exit 1
+}
+
+switch ($Action) {
+    "start" {
+        Write-Host "🚀 正在启动 Sentinel-Trade 系统..." -ForegroundColor Green
+        & $DOCKER_COMPOSE up -d --build
+        Write-Host "`n✅ 系统已在后台启动。使用 './manage.ps1 status' 查看状态。" -ForegroundColor Green
+    }
+    "stop" {
+        Write-Host "🛑 正在停止系统..." -ForegroundColor Yellow
+        & $DOCKER_COMPOSE stop
+    }
+    "restart" {
+        Write-Host "🔄 正在重启服务..." -ForegroundColor Cyan
+        if ($Service -ne "") {
+            & $DOCKER_COMPOSE restart $Service
+        } else {
+            & $DOCKER_COMPOSE restart
+        }
+    }
+    "status" {
+        Write-Host "📊 服务当前状态:" -ForegroundColor Cyan
+        & $DOCKER_COMPOSE ps
+    }
+    "logs" {
+        if ($Service -ne "") {
+            & $DOCKER_COMPOSE logs -f --tail=100 $Service
+        } else {
+            & $DOCKER_COMPOSE logs -f --tail=100
+        }
+    }
+    "clean" {
+        $confirm = Read-Host "确定要清理所有容器和数据卷吗？数据将不可恢复 (y/n)"
+        if ($confirm -eq "y") {
+            Write-Host "🧹 正在彻底清理系统..." -ForegroundColor Red
+            & $DOCKER_COMPOSE down -v
+        }
+    }
+    "ui" {
+        Write-Host "🌐 正在打开 Web 界面..." -ForegroundColor Cyan
+        Start-Process "http://localhost:3000"
+        Start-Process "http://localhost:8081"
+    }
+    default {
+        Show-Help
+    }
+}
