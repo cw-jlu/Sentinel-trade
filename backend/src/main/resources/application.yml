@@ -44,3 +44,8 @@ logging:
   level:
     com.sentinel_trade: INFO
     org.springframework.web.socket: INFO
+
+ai:
+  qwen:
+    api-key: ${QWEN_API_KEY:}
+

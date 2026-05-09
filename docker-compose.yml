@@ -103,14 +103,18 @@ services:
   # Data Ingestion (Python / FastAPI)
   # ─────────────────────────────────────────────
   ingestion:
-    build: ./ingestion
+    build:
+      context: ./ingestion
+      args:
+        HTTP_PROXY: http://host.docker.internal:6478
+        HTTPS_PROXY: http://host.docker.internal:6478
     container_name: sentinel-ingestion
     depends_on:
       kafka:
         condition: service_healthy
     environment:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      BINANCE_WS_URL: wss://stream.binance.com:9443/ws/btcusdt@aggTrade
+      BINANCE_WS_URL: wss://data-stream.binance.vision/ws/btcusdt@aggTrade
       LOG_LEVEL: INFO
       HTTP_PROXY: http://host.docker.internal:6478
       HTTPS_PROXY: http://host.docker.internal:6478
@@ -165,7 +169,11 @@ services:
   # Flink Job 自动提交（构建 jar 并提交到集群）
   # ─────────────────────────────────────────────
   flink-job-submitter:
-    build: ./stream-processing
+    build:
+      context: ./stream-processing
+      args:
+        HTTP_PROXY: http://host.docker.internal:6478
+        HTTPS_PROXY: http://host.docker.internal:6478
     container_name: sentinel-flink-job
     depends_on:
       flink-jobmanager:
@@ -184,7 +192,11 @@ services:
   # Backend Service (Spring Boot)
   # ─────────────────────────────────────────────
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        HTTP_PROXY: http://host.docker.internal:6478
+        HTTPS_PROXY: http://host.docker.internal:6478
     container_name: sentinel-backend
     ports:
       - "8080:8080"
@@ -204,6 +216,7 @@ services:
       CLICKHOUSE_URL: http://clickhouse:8123
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_DATABASE: sentinel_trade
+      QWEN_API_KEY: ${QWEN_API_KEY}
     mem_limit: 1g
     restart: unless-stopped
 
@@ -211,7 +224,11 @@ services:
   # Frontend (Vue.js / Nginx)
   # ─────────────────────────────────────────────
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        HTTP_PROXY: http://host.docker.internal:6478
+        HTTPS_PROXY: http://host.docker.internal:6478
     container_name: sentinel-frontend
     ports:
       - "3000:80"

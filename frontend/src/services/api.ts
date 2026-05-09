@@ -16,6 +16,7 @@ export interface KLine {
   lowPrice: string
   closePrice: string
   volume: string
+  vwap: string
   tradeCount: number
 }
 
@@ -49,4 +50,13 @@ export async function fetchTicks(
     params: { symbol, startTime, endTime },
   })
   return data
+}
+
+export async function analyzeWithQwen(symbol: string, marketData: string): Promise<string> {
+  const { data } = await api.post<{ analysis: string; error?: string }>('/analysis/qwen', {
+    symbol,
+    marketData
+  })
+  if (data.error) throw new Error(data.error)
+  return data.analysis
 }

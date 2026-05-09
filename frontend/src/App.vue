@@ -67,7 +67,7 @@ import KLineChart from './components/KLineChart.vue'
 import AlertList from './components/AlertList.vue'
 import SymbolSelector from './components/SymbolSelector.vue'
 import { WebSocketService } from './services/WebSocketService'
-import { fetchKLines } from './services/api'
+import { fetchKLines, analyzeWithQwen } from './services/api'
 import { useLocalTime, toggleTimezone } from './store/settings'
 
 const selectedSymbol = ref('BTCUSDT')
@@ -79,6 +79,31 @@ const alerts = ref<any[]>([])
 const wsConnected = ref(false)
 const startDate = ref('')
 const endDate = ref('')
+
+const isAnalyzing = ref(false)
+const aiAnalysisResult = ref('')
+const showAiModal = ref(false)
+
+async function triggerAiAnalysis() {
+  if (klines.value.length === 0) return;
+  isAnalyzing.value = true;
+  showAiModal.value = true;
+  aiAnalysisResult.value = '';
+  
+  try {
+    const recent = klines.value.slice(-30); // Use recent candles
+    const dataString = recent.map((k: any) => 
+      `Time: ${new Date(k.openTime).toISOString()}, Close: ${k.close}, Vol: ${k.volume}, VWAP: ${k.vwap || 'N/A'}`
+    ).join('\n');
+    
+    const result = await analyzeWithQwen(selectedSymbol.value, dataString);
+    aiAnalysisResult.value = result;
+  } catch (e: any) {
+    aiAnalysisResult.value = 'Failed to get analysis: ' + e.message;
+  } finally {
+    isAnalyzing.value = false;
+  }
+}
 
 // Map display interval to the backend-native interval for fetching
 const nativeIntervals: Record<string, string> = { '1m': '1m', '5m': '5m', '1h': '1h' }
@@ -139,6 +164,35 @@ wsService.onMessage((data: any) => {
       raw1mKlines.value = [...raw1mKlines.value]
     } else {
       raw1mKlines.value = [...raw1mKlines.value.slice(-500), incoming]
+    }
+
+    // --- VWAP Bullish Trend Detection ---
+    // If the arithmetic average price is significantly higher than VWAP
+    if (incoming.vwap && incoming.open && incoming.close && incoming.high && incoming.low) {
+      const o = parseFloat(String(incoming.open));
+      const c = parseFloat(String(incoming.close));
+      const h = parseFloat(String(incoming.high));
+      const l = parseFloat(String(incoming.low));
+      const vwap = parseFloat(String(incoming.vwap));
+      
+      const arithmeticAvg = (o + c + h + l) / 4;
+      
+      // Threshold for "significantly higher": e.g., 0.05% difference
+      if (arithmeticAvg > vwap * 1.0005) {
+        // Prevent alert spam (max 1 per minute)
+        const lastAlert = alerts.value.find(a => a.alertType === 'VWAP_BULLISH');
+        if (!lastAlert || Date.now() - lastAlert.timestamp > 60000) {
+          const alert = {
+            alertId: `vwap-${Date.now()}`,
+            alertType: 'VWAP_BULLISH',
+            symbol: incoming.symbol || selectedSymbol.value,
+            timestamp: Date.now(),
+            severity: 'HIGH',
+            amount: incoming.volume?.toString() || '0'
+          };
+          alerts.value = [alert, ...alerts.value.slice(0, 99)];
+        }
+      }
     }
   }
   // Also collect native 5m/1h if backend sends them (for direct display)
@@ -525,5 +579,91 @@ onUnmounted(() => {
     grid-row: 3;
     max-height: 400px;
   }
+}
+
+/* AI Button & Modal */
+.ai-btn {
+  padding: 0.4rem 1rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(147, 51, 234, 0.2));
+  border: 1px solid rgba(147, 51, 234, 0.5);
+  border-radius: 20px;
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+}
+.ai-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.4), rgba(147, 51, 234, 0.4));
+  box-shadow: 0 0 10px rgba(147, 51, 234, 0.3);
+}
+.ai-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-lg);
+}
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-header h2 {
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: color 0.3s;
+}
+.close-btn:hover {
+  color: var(--text-primary);
+}
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+.loading-state {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: var(--accent-indigo);
+  font-weight: 500;
 }
 </style>

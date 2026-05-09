@@ -62,6 +62,7 @@ interface KLineData {
   highPrice?: number | string
   lowPrice?: number | string
   closePrice?: number | string
+  vwap?: number | string
 }
 
 const props = defineProps<{
@@ -187,6 +188,7 @@ const chartOption = computed(() => ({
           <span style="color: #64748b">High:</span> <span style="text-align: right; color: #10b981">${getH(k)}</span>
           <span style="color: #64748b">Low:</span> <span style="text-align: right; color: #f43f5e">${getL(k)}</span>
           <span style="color: #64748b">Close:</span> <span style="text-align: right">${getC(k)}</span>
+          ${k.vwap ? `<span style="color: #3b82f6">VWAP:</span> <span style="text-align: right; color: #3b82f6">${parseFloat(String(k.vwap)).toFixed(2)}</span>` : ''}
           ${k.volume ? `<span style="color: #64748b">Vol:</span> <span style="text-align: right">${parseFloat(String(k.volume)).toFixed(2)}</span>` : ''}
         </div>
       `
@@ -219,17 +221,28 @@ const chartOption = computed(() => ({
       textStyle: { color: '#64748b' }
     }
   ],
-  series: [{
-    name: 'Price',
-    type: 'candlestick',
-    data: props.klines.map(k => [getO(k), getC(k), getL(k), getH(k)]),
-    itemStyle: {
-      color: upColor,
-      color0: downColor,
-      borderColor: upColor,
-      borderColor0: downColor,
+  series: [
+    {
+      name: 'Price',
+      type: 'candlestick',
+      data: props.klines.map(k => [getO(k), getC(k), getL(k), getH(k)]),
+      itemStyle: {
+        color: upColor,
+        color0: downColor,
+        borderColor: upColor,
+        borderColor0: downColor,
+      },
     },
-  }],
+    {
+      name: 'VWAP',
+      type: 'line',
+      data: props.klines.map(k => k.vwap ? parseFloat(String(k.vwap)) : null),
+      smooth: true,
+      showSymbol: false,
+      lineStyle: { color: '#3b82f6', width: 2, opacity: 0.8 },
+      z: 10
+    }
+  ],
 }))
 </script>
 

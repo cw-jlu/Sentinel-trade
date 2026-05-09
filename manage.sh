@@ -6,7 +6,9 @@
 ACTION=${1:-"status"}
 SERVICE=$2
 
-DOCKER_COMPOSE="docker-compose"
+compose() {
+    "${DOCKER_COMPOSE_CMD[@]}" "$@"
+}
 
 show_help() {
     echo -e "\033[0;36mSentinel-Trade 管理脚本\033[0m"
@@ -27,40 +29,68 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
+if command -v docker-compose &> /dev/null; then
+    DOCKER_COMPOSE_CMD=(docker-compose)
+elif docker compose version > /dev/null 2>&1; then
+    DOCKER_COMPOSE_CMD=(docker compose)
+else
+    echo -e "\033[0;31m错误: 未找到可用的 Docker Compose 命令。请安装 docker-compose 或启用 'docker compose' 插件。\033[0m"
+    exit 1
+fi
+
 case $ACTION in
     "start")
         echo -e "\033[0;32m🚀 正在启动 Sentinel-Trade 系统...\033[0m"
-        $DOCKER_COMPOSE up -d --build
-        echo -e "\n\033[0;32m✅ 系统已在后台启动。使用 './manage.sh status' 查看状态。\033[0m"
+        compose up -d --build
+        if [ $? -ne 0 ]; then exit 1; fi
+        
+        echo -e "\n\033[0;32m✅ 系统已启动。\033[0m"
+        echo -e "\033[0;36m🌐 正在尝试打开浏览器...\033[0m"
+        
+        # 在不同平台尝试打开浏览器
+        URLS=("http://localhost:3000" "http://localhost:8081")
+        for url in "${URLS[@]}"; do
+            if command -v explorer.exe &> /dev/null; then # Windows (Git Bash/WSL)
+                explorer.exe "$url"
+            elif command -v open &> /dev/null; then       # macOS
+                open "$url"
+            elif command -v xdg-open &> /dev/null; then   # Linux
+                xdg-open "$url" &> /dev/null
+            fi
+        done
+        
+        echo -e "\033[0;36m如浏览器未自动打开，请访问:\033[0m"
+        echo "  - 前端看板: http://localhost:3000"
+        echo "  - Flink 控制台: http://localhost:8081"
         ;;
     "stop")
         echo -e "\033[0;33m🛑 正在停止系统...\033[0m"
-        $DOCKER_COMPOSE stop
+        compose stop
         ;;
     "restart")
         echo -e "\033[0;36m🔄 正在重启服务...\033[0m"
         if [ -n "$SERVICE" ]; then
-            $DOCKER_COMPOSE restart $SERVICE
+            compose restart $SERVICE
         else
-            $DOCKER_COMPOSE restart
+            compose restart
         fi
         ;;
     "status")
         echo -e "\033[0;36m📊 服务当前状态:\033[0m"
-        $DOCKER_COMPOSE ps
+        compose ps
         ;;
     "logs")
         if [ -n "$SERVICE" ]; then
-            $DOCKER_COMPOSE logs -f --tail=100 $SERVICE
+            compose logs -f --tail=100 $SERVICE
         else
-            $DOCKER_COMPOSE logs -f --tail=100
+            compose logs -f --tail=100
         fi
         ;;
     "clean")
         read -p "确定要清理所有容器和数据卷吗？数据将不可恢复 (y/n): " confirm
         if [ "$confirm" == "y" ]; then
             echo -e "\033[0;31m🧹 正在彻底清理系统...\033[0m"
-            $DOCKER_COMPOSE down -v
+            compose down -v
         fi
         ;;
     "ui")

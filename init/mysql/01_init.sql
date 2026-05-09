@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS kline_aggregated (
     low_price   DECIMAL(18, 8)                      NOT NULL,
     close_price DECIMAL(18, 8)                      NOT NULL,
     volume      DECIMAL(18, 8)                      NOT NULL,
+    vwap        DECIMAL(18, 8)                      NOT NULL,
     trade_count INT UNSIGNED                        NOT NULL DEFAULT 0,
     INDEX idx_symbol_interval_time (symbol, `interval`, open_time)
 ) ENGINE = InnoDB

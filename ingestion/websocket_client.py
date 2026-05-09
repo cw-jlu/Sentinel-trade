@@ -127,7 +127,26 @@ class WebSocketClient:
         assert self._url is not None
         assert self._on_message is not None
 
-        async with websockets.connect(self._url) as ws:
+        import os
+        try:
+            from websockets_proxy import proxy_connect, Proxy
+        except ImportError:
+            proxy_connect = websockets.connect
+            Proxy = None
+
+        proxy_str = os.environ.get("ALL_PROXY") or os.environ.get("HTTPS_PROXY") or os.environ.get("HTTP_PROXY")
+        
+        if proxy_str and Proxy:
+            # Create a Proxy object instead of using the raw string
+            proxy_obj = Proxy.from_url(proxy_str)
+            connect_func = proxy_connect
+            connect_kwargs = {'proxy': proxy_obj}
+            logger.info("WebSocketClient using proxy: %s", proxy_str)
+        else:
+            connect_func = websockets.connect
+            connect_kwargs = {}
+
+        async with connect_func(self._url, **connect_kwargs) as ws:
             self._ws = ws
             logger.info("WebSocketClient connected to %s", self._url)
             async for message in ws:
