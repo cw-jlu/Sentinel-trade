@@ -6,6 +6,7 @@
         <option value="">All Anomalies</option>
         <option value="LARGE_ORDER">Large Order</option>
         <option value="FLASH_CRASH">Flash Crash</option>
+        <option value="VWAP_BULLISH">Bullish Divergence</option>
       </select>
     </div>
     

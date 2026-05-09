@@ -46,6 +46,9 @@ public class KLineEntity {
     @Column(nullable = false, precision = 18, scale = 8)
     private BigDecimal volume;
 
+    @Column(nullable = false, precision = 18, scale = 8)
+    private BigDecimal vwap;
+
     @Column(name = "trade_count")
     private Integer tradeCount;
 
@@ -73,6 +76,8 @@ public class KLineEntity {
     public void setClosePrice(BigDecimal closePrice) { this.closePrice = closePrice; }
     public BigDecimal getVolume() { return volume; }
     public void setVolume(BigDecimal volume) { this.volume = volume; }
+    public BigDecimal getVwap() { return vwap; }
+    public void setVwap(BigDecimal vwap) { this.vwap = vwap; }
     public Integer getTradeCount() { return tradeCount; }
     public void setTradeCount(Integer tradeCount) { this.tradeCount = tradeCount; }
 }

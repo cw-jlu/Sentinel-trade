@@ -19,12 +19,12 @@ public class MySQLSink extends RichSinkFunction<KLine> {
 
     private static final String INSERT_SQL =
             "INSERT INTO kline_aggregated " +
-            "(symbol, `interval`, open_time, open_price, high_price, low_price, close_price, volume, trade_count) " +
-            "VALUES (?,?,?,?,?,?,?,?,?) " +
+            "(symbol, `interval`, open_time, open_price, high_price, low_price, close_price, volume, vwap, trade_count) " +
+            "VALUES (?,?,?,?,?,?,?,?,?,?) " +
             "ON DUPLICATE KEY UPDATE " +
             "open_price=VALUES(open_price), high_price=VALUES(high_price), " +
             "low_price=VALUES(low_price), close_price=VALUES(close_price), " +
-            "volume=VALUES(volume), trade_count=VALUES(trade_count)";
+            "volume=VALUES(volume), vwap=VALUES(vwap), trade_count=VALUES(trade_count)";
 
     private final String jdbcUrl;
     private final String username;
@@ -58,7 +58,8 @@ public class MySQLSink extends RichSinkFunction<KLine> {
             statement.setBigDecimal(6, kline.getLow());
             statement.setBigDecimal(7, kline.getClose());
             statement.setBigDecimal(8, kline.getVolume());
-            statement.setInt(9, kline.getTradeCount());
+            statement.setBigDecimal(9, kline.getVwap());
+            statement.setInt(10, kline.getTradeCount());
             statement.executeUpdate();
             LOG.debug("MySQLSink wrote KLine symbol={} interval={} openTime={}",
                     kline.getSymbol(), kline.getInterval(), kline.getOpenTime());

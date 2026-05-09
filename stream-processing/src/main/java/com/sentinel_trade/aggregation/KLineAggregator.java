@@ -78,7 +78,13 @@ public class KLineAggregator
         BigDecimal low    = sorted.stream().map(TickData::getPrice).min(BigDecimal::compareTo).orElse(open);
         BigDecimal volume = sorted.stream().map(TickData::getQuantity).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+        // Calculate VWAP: sum(price * quantity) / sum(quantity)
+        BigDecimal totalAmount = sorted.stream().map(TickData::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal vwap = volume.compareTo(BigDecimal.ZERO) > 0 
+                ? totalAmount.divide(volume, 8, java.math.RoundingMode.HALF_UP) 
+                : open;
+
         return new KLine(symbol, interval, openTime, closeTime,
-                open, high, low, close, volume, ticks.size());
+                open, high, low, close, volume, vwap, ticks.size());
     }
 }

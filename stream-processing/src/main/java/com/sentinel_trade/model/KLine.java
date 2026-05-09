@@ -19,6 +19,7 @@ public class KLine {
     private BigDecimal low;
     private BigDecimal close;
     private BigDecimal volume;
+    private BigDecimal vwap;
     private int tradeCount;
 
     /** Required no-arg constructor for Flink POJO serialization. */
@@ -26,7 +27,7 @@ public class KLine {
 
     public KLine(String symbol, String interval, long openTime, long closeTime,
                  BigDecimal open, BigDecimal high, BigDecimal low, BigDecimal close,
-                 BigDecimal volume, int tradeCount) {
+                 BigDecimal volume, BigDecimal vwap, int tradeCount) {
         this.symbol = symbol;
         this.interval = interval;
         this.openTime = openTime;
@@ -36,6 +37,7 @@ public class KLine {
         this.low = low;
         this.close = close;
         this.volume = volume;
+        this.vwap = vwap;
         this.tradeCount = tradeCount;
     }
 
@@ -70,6 +72,9 @@ public class KLine {
     public BigDecimal getVolume() { return volume; }
     public void setVolume(BigDecimal volume) { this.volume = volume; }
 
+    public BigDecimal getVwap() { return vwap; }
+    public void setVwap(BigDecimal vwap) { this.vwap = vwap; }
+
     public int getTradeCount() { return tradeCount; }
     public void setTradeCount(int tradeCount) { this.tradeCount = tradeCount; }
 
@@ -91,13 +96,14 @@ public class KLine {
                 && Objects.equals(high, that.high)
                 && Objects.equals(low, that.low)
                 && Objects.equals(close, that.close)
-                && Objects.equals(volume, that.volume);
+                && Objects.equals(volume, that.volume)
+                && Objects.equals(vwap, that.vwap);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(symbol, interval, openTime, closeTime,
-                open, high, low, close, volume, tradeCount);
+                open, high, low, close, volume, vwap, tradeCount);
     }
 
     @Override
@@ -105,6 +111,7 @@ public class KLine {
         return "KLine{symbol='" + symbol + "', interval='" + interval
                 + "', openTime=" + openTime + ", open=" + open
                 + ", high=" + high + ", low=" + low + ", close=" + close
-                + ", volume=" + volume + ", tradeCount=" + tradeCount + '}';
+                + ", volume=" + volume + ", vwap=" + vwap
+                + ", tradeCount=" + tradeCount + '}';
     }
 }
