@@ -153,6 +153,7 @@ LOG.info("Sentinel-Trade pipeline built – brokers={}", KAFKA_BROKERS);
 return env; 
 } 
 ``` 
+![SentinelTradeJob](./static/Trade_job.png)
 K 线与告警数据写入 Kafka 时，采用以下辅助方法构建 Sink：**传入目标 Topic 名称**，**值采用 JSON 序列化**。 
 ```java 
 private static <T> KafkaSink<T> buildKafkaSink(String topic) { 
@@ -278,6 +279,7 @@ CREATE TABLE IF NOT EXISTS kline_aggregated (
 ## 六、总结 
 1. **架构总结**：第二节描绘了从币安数据源、Kafka 消息队列、Flink 计算引擎到多种数据库的**端到端数据链路**；第三节阐述了**数据接入与 Kafka 写入机制**；第四节说明了 **Flink 的核心计算逻辑与 Kafka 输出**；第五节详述了 **Redis / ClickHouse / MySQL 的写入策略与表结构**。 
 2. **存储选型**：Redis 适用于前端最新 K 线的低延迟获取；ClickHouse 适用于海量成交明细的 OLAP 分析；MySQL 中的 K 线表适用于基于交易对、周期及时间维度的结构化历史查询。 
+![K 线示例](./static/K_line.png)
 3. **Kafka 角色定位**：Kafka 在架构中出现两次，分别承担原始成交数据的输入缓冲与计算结果的输出分发，实现了系统间的解耦与故障隔离。 
 --- 
 ## 七、参考文献 
